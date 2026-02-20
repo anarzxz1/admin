@@ -1,0 +1,51 @@
+name: Deploy to Timeweb Cloud
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:  # Позволяет запускать вручную
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build project
+      run: npm run build
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+    
+    - name: Deploy to Timeweb Cloud VPS
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.TIMEWEB_HOST }}
+        username: ${{ secrets.TIMEWEB_USERNAME }}
+        key: ${{ secrets.TIMEWEB_SSH_KEY }}
+        port: ${{ secrets.TIMEWEB_SSH_PORT || 22 }}
+        script: |
+          cd /var/www/ваш-репозиторий
+          git pull origin main
+          npm install
+          npm run build
+          systemctl reload nginx
+          
+    - name: Deployment status
+      if: success()
+      run: echo "✅ Деплой завершен успешно!"
+      
+    - name: Deployment failed
+      if: failure()
+      run: echo "❌ Ошибка при деплое!"
