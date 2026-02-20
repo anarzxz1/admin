@@ -146,7 +146,7 @@ function LoadersPage() {
 
       {!processing && !currentOrder && (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-xl">Нет активных заказов</p>
+          <p className="text-gray-500 text-xl">Нет активных заказов.</p>
         </div>
       )}
 
